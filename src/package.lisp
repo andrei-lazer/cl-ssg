@@ -1,6 +1,7 @@
 (defpackage #:cl-ssg
   (:use #:cl)
-  (:export #:add-dir-to-job-queue
+  (:export #:collect-dir
            #:merge-meta
-           #:print-hash-table))
+           #:print-hash-table
+           #:process-input-dir))
 (in-package #:cl-ssg)

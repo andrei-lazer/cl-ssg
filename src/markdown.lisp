@@ -1,4 +1,8 @@
-(in-package #:cl-ssg)
+(defpackage #:markdown
+  (:use #:cl)
+  (:export #:render-text))
+
+(in-package #:markdown)
 
 (defparameter *md-link-prefix* nil
   "prefix put in front of relative links, for example \"/cards/\". when nil, links are
@@ -7,7 +11,6 @@
 (defparameter *md-link-dir* nil
   "directory of the file being rendered, relative to its source root. relative links are
    resolved against it before *link-prefix* is added")
-
 
 ;; turns a link as written in the source (say "../assets/diagram.png" inside git/rebasing.md)
 ;; into one that works from the site root (say "/cards/assets/diagram.png")
@@ -31,20 +34,15 @@
   "hash table that stores information that all rendering functions should see.
   saves passing around a bunch of data. should only ever be set locally.")
 
-
-(defun compile-markdown (in-path &key permalink layout link-prefix mathjax)
-  ())
-
-
-; (defun render (text)
-;   "renders a markdown string into a html fragment"
-;   (let ((3bmd:*smart-quotes* t)
-;         ;; notes link to each other's sections, for example http.md#url
-;         (3bmd:*generate-header-ids* t)
-;         (3bmd-code-blocks:*code-blocks* t)
-;         (3bmd-tables:*tables* t)
-;         (3bmd-math:*math* t)
-;         (3bmd-wiki:*wiki-links* t)
-;         (3bmd-wiki:*wiki-processor* :cards))
-;     (with-output-to-string (out)
-;       (3bmd:parse-string-and-print-to-stream text out))))
+(defun render-text (text)
+  "renders a markdown string into a html fragment"
+  (let ((3bmd:*smart-quotes* t)
+        ;; notes link to each other's sections, for example http.md#url
+        (3bmd:*generate-header-ids* t)
+        (3bmd-code-blocks:*code-blocks* t)
+        (3bmd-tables:*tables* t)
+        (3bmd-math:*math* t)
+        (3bmd-wiki:*wiki-links* t)
+        (3bmd-wiki:*wiki-processor* :cards))
+    (with-output-to-string (out)
+      (3bmd:parse-string-and-print-to-stream text out))))

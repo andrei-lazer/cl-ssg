@@ -1,10 +1,10 @@
 (asdf:defsystem
   "cl-ssg"
-  :depends-on (; "3bmd"
-               ; "3bmd-ext-wiki-links"
-               ; "3bmd-ext-code-blocks"
-               ; "3bmd-ext-math"
-               ; "3bmd-ext-tables"
+  :depends-on ("3bmd"
+               "3bmd-ext-wiki-links"
+               "3bmd-ext-code-blocks"
+               "3bmd-ext-math"
+               "3bmd-ext-tables"
                "cl-yaclyaml"
                "spinneret"
                "alexandria")
@@ -15,9 +15,11 @@
   :components ((:module "src"
                 :serial t
                 :components ((:file "package")
-                             (:file "markdown")
                              (:file "utils")
-                             (:file "walk"))))
+                             (:file "markdown")
+                             (:file "walk")
+                             (:file "compile"))))
+
   :in-order-to ((asdf:test-op (asdf:test-op "cl-ssg/tests"))))
 
 (asdf:defsystem

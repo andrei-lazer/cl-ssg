@@ -1,9 +1,19 @@
 (in-package #:cl-ssg)
 
+
+(defparameter *config-file* "config.yaml"
+  "if found, this file will set a preset for the metadata of all files in that directory.
+  currently cannot be inherited by subdirectories")
+
 ;; recursively walk through directories and apply a function to each file
 (defun walk (dir fn)
   (mapc fn (uiop:directory-files dir))
   (mapc (lambda (d) (walk d fn)) (uiop:subdirectories dir)))
+
+;; recursively walk through directories and apply a function to each subdir
+(defun walk-subdirs (dir fn)
+  (funcall fn dir)
+  (mapc (lambda (d) (walk-subdirs d fn)) (uiop:subdirectories dir)))
 
 (defun print-hash-table (table &optional (stream *standard-output*))
   (maphash (lambda (k v)
@@ -28,21 +38,10 @@
               ;; if no collision, add small's key-value pair to big
               (setf (gethash key big) small-val)))))
   big)
-
-(defun compile-markdown (file meta)
-  (format t "~&compiling markdown file ~a~%Meta:~%" file)
-  (print-hash-table meta))
   
-(defparameter *filetype-compiler-lookup* 
-  (alexandria:plist-hash-table
-    '("md" compile-markdown)
-    :test #'equal))
-
-(defparameter *config-file* "config.yaml")
-
 ;; in a directory, reads a config.yaml file and all headers
-;; and adds these to the queue. queue is of the form (fn path body meta)
-(defun add-dir-to-job-queue (dir queue)
+;; and adds these to the queue. queue is of the form (filetype path body meta)
+(defun add-flat-dir-to-queue (dir queue)
   (let* ((yaml-path (merge-pathnames *config-file* dir)) ;; extract yaml from dir/config.yaml
          (*meta* (if (uiop:file-exists-p yaml-path)
                      (cl-yy:yaml-simple-load (uiop:read-file-string yaml-path)))))
@@ -52,9 +51,15 @@
         (multiple-value-bind (new-meta body) (utils:read-file-with-frontmatter file)
           (let* ((*meta* (merge-meta new-meta *meta*)) ;; merges with priority to the file's yaml
                  (filetype (pathname-type file))
-                 (compile-fn (gethash filetype *filetype-compiler-lookup*))
-                 (job `(,compile-fn ,file ,body ,*meta*)))
+                 ;; IMPORTANT: targets are _always_ of this form
+                 (target `(:filetype ,filetype :filepath ,file :body ,body :meta ,*meta*)))
 
-            (push job queue))))))
-  (format t "QUEUE: ~a~%" queue)
+            (push target queue))))))
+  queue)
+
+
+;; does add-flat-dir-to-queue recursively through all subdirectories.
+(defun collect-dir (dir queue)
+  (walk-subdirs dir (lambda (dir) 
+                      (setf queue (add-flat-dir-to-queue dir queue))))
   queue)

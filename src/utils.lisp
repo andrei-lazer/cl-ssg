@@ -2,14 +2,20 @@
   (:use #:cl)
   (:export #:split-lines
            #:split-frontmatter
-           #:read-file-with-frontmatter))
+           #:read-file-with-frontmatter
+           #:ensure-and-absolute))
 
 (in-package #:utils)
-
 
 (defparameter +line-padding+ '(#\Space #\Tab #\Return)
   "trailing characters ignored when looking for a --- frontmatter delimiter. #\\Return is
    in here so that files with crlf line endings are handled the same as lf ones")
+
+;; takes a relative file path, creates all directories leading to it, and
+;; returns the absolute filepath
+(defun ensure-and-absolute (rel-path)
+  (ensure-directories-exist rel-path)
+  (uiop:ensure-pathname rel-path :defaults (uiop:getcwd) :ensure-absolute t :ensure-physical t))
 
 (defun split-lines (text)
   ;; splitting on #\Newline alone leaves a trailing #\Return on every line of a
