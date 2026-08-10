@@ -16,18 +16,30 @@
   (let* ((meta (getf target :meta))
          (permalink (gethash "permalink" meta))
          (in-path (getf target :filepath)))
-        (make-pathname :type "html" 
-                       :defaults 
-                       (if permalink
-                         (resolve-permalink permalink)
-                         (merge-pathnames (uiop:enough-pathname in-path *input-root*) *output-root*)))))
+        (if permalink
+          (resolve-permalink permalink)
+          (let* ((rel-path (uiop:enough-pathname in-path *input-root*))
+                 (rel-out-path
+                   (if (member (pathname-name rel-path) '("404" "index") :test #'equal)
+                     (make-pathname :type "html" :defaults rel-path)
+                     (format nil "~a/index.html" (make-pathname :type nil :defaults rel-path)))))
+            (merge-pathnames rel-out-path *output-root*)))))
+
+(defun resolve-link-prefix (out-path is-index)
+  (merge-pathnames
+    (uiop:enough-pathname
+      (if is-index
+        (uiop:pathname-directory-pathname out-path)
+        (uiop:pathname-parent-directory-pathname out-path))
+      *output-root*)
+    markdown:*link-prefix*))
 
 (defun body-to-html (body filetype)
   "converts various filetypes to html"
   (cond
     ((equal filetype "md") 
-     (let ((html (markdown:render-text body)))
-       html))))
+     (markdown:render-text body))
+    (t (format t "Not running for filetype ~a~%" filetype))))
 
 (defun call-by-name (fn-name pkg-name &rest args)
   "given a `fn-name` and `pkg-name`, this calls `pkg-name:fn-name` with arguments `args`"
@@ -44,14 +56,11 @@
 (defun write-target (target)
   (let* ((html (getf target :html))
          (out-path (getf target :out-path)))
+        ; (format t "out-path: ~a~%" out-path)
         (ensure-directories-exist out-path)
         (uiop:with-output-file (s out-path :if-exists :supersede)
-                               (format s html))))
+                               (write-string html s))))
          
-                                
-         
-     
-
 (defun process-target (target)
   "processes the target into an object that can be easily written to a file.
       - conversion to html
@@ -62,13 +71,19 @@
          (filepath (getf target :filepath))
          (permalink (gethash "permalink" meta))
          (out-path (resolve-output-dir target)) 
-         (body (getf target :body))
-         (html-core (body-to-html body filetype))
-         (layout-str (gethash "layout" meta))
-         (html (apply-layout html-core layout-str meta))
-         ;; create the new target
-         (new-target (list :html html :out-path out-path)))
-        new-target))
+         (markdown:*link-prefix* (resolve-link-prefix 
+                                    out-path (equal "index" (pathname-name filepath))))
+         (body (getf target :body)))
+         ;; link-prefix is set so that relative links are resolved properly
+         ; (markdown:*link-prefix* (merge-pathnames out-path markdown:*link-prefix*)))
+        (format t "out-path: ~a~%" out-path)
+        (format t "link-prefix: ~a~%" markdown:*link-prefix*)
+        (let* ((html-core (body-to-html body filetype))
+               (layout-str (gethash "layout" meta))
+               (html (apply-layout html-core layout-str meta))
+               ;; create the new target
+               (new-target (list :html html :out-path out-path)))
+          new-target)))
 
 (defun process-input-dir ()
   (let* ((target-queue (collect-dir *input-root* '()))

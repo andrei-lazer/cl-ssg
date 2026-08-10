@@ -1,2 +1,4 @@
 test-dir/
 AGENTS.*
+my-site/
+build.lisp
