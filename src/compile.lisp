@@ -2,10 +2,10 @@
 (in-package #:cl-ssg)
 
 
-(defparameter *input-root* "./src"
+(defparameter *input-root* "./src/"
   "./src by default")
 
-(defparameter *output-root* "./build"
+(defparameter *output-root* "./build/"
   "./build by default")
 
 
@@ -32,31 +32,30 @@
         (uiop:pathname-directory-pathname out-path)
         (uiop:pathname-parent-directory-pathname out-path))
       *output-root*)
-    markdown:*link-prefix*))
+    (or markdown:*link-prefix* "/")))
 
 (defun body-to-html (body filetype)
   "converts various filetypes to html"
   (cond
     ((equal filetype "md") 
      (markdown:render-text body))
-    (t (format t "Not running for filetype ~a~%" filetype))))
+    (t (format t "Filetype ~a is unsupported~%" filetype))))
 
 (defun call-by-name (fn-name pkg-name &rest args)
   "given a `fn-name` and `pkg-name`, this calls `pkg-name:fn-name` with arguments `args`"
   (let ((fn-sym (find-symbol (string-upcase fn-name) (string-upcase pkg-name))))
     (apply fn-sym args)))
 
-(defun apply-layout (html layout-str &rest args)
+(defun apply-layout (layout-str &rest args)
   "given some string specifying a layout (extracted from yaml), it
   applies that layout to the html"
   (if layout-str
-    (call-by-name layout-str "layouts" html (car args))
+    (apply #'call-by-name layout-str "layouts" args)
     html))
   
 (defun write-target (target)
   (let* ((html (getf target :html))
          (out-path (getf target :out-path)))
-        ; (format t "out-path: ~a~%" out-path)
         (ensure-directories-exist out-path)
         (uiop:with-output-file (s out-path :if-exists :supersede)
                                (write-string html s))))
@@ -75,12 +74,9 @@
                                     out-path (equal "index" (pathname-name filepath))))
          (body (getf target :body)))
          ;; link-prefix is set so that relative links are resolved properly
-         ; (markdown:*link-prefix* (merge-pathnames out-path markdown:*link-prefix*)))
-        (format t "out-path: ~a~%" out-path)
-        (format t "link-prefix: ~a~%" markdown:*link-prefix*)
         (let* ((html-core (body-to-html body filetype))
                (layout-str (gethash "layout" meta))
-               (html (apply-layout html-core layout-str meta))
+               (html (apply-layout layout-str :html html-core :meta meta))
                ;; create the new target
                (new-target (list :html html :out-path out-path)))
           new-target)))

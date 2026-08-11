@@ -10,10 +10,6 @@
   "prefix put in front of relative links, for example \"/cards/\". when nil, links are
    left exactly as they are written")
 
-(defparameter *link-dir* nil
-  "directory of the file being rendered, relative to its source root. relative links are
-   resolved against it before *link-prefix* is added")
-
 (defun external-link-p (url)
   (or (zerop (length url))
       (find (char url 0) "/#")
@@ -29,18 +25,13 @@
       (let* ((hash (position #\# url))
              (anchor (if hash (subseq url hash) ""))
              (path (merge-pathnames (if hash (subseq url 0 hash) url)
-                                    (or *link-dir* #p"")))
+                                    #p""))
              ;; notes link to each other by file name, but they are published as html.
              (path (if (equal (pathname-type path) "md")
                        (make-pathname :type nil :defaults path)
                        path))
              (dir (pathname-directory path))
-             (path (make-pathname :directory dir
-                                  :defaults path))
              (output (format nil "~a~a~a" *link-prefix* (namestring path) anchor)))
-            ; (format t "input url: ~a~%" url)
-            ; (format t "dir: ~a~%" dir)
-            ; (format t "output: ~a~%" output)
             output)))
 
 ;; 3bmd configurations to allow for recolving links and stuff. AI generated

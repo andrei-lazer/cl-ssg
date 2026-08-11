@@ -6,16 +6,6 @@
   "if found, this file will set a preset for the metadata of all files in that directory.
   currently cannot be inherited by subdirectories")
 
-;; recursively walk through directories and apply a function to each file
-(defun walk (dir fn)
-  (mapc fn (uiop:directory-files dir))
-  (mapc (lambda (d) (walk d fn)) (remove-if (lambda (x) (uiop:string-prefix-p ".")) uiop:subdirectories) dir))
-
-;; recursively walk through directories and apply a function to each subdir
-(defun walk-subdirs (dir fn)
-  (funcall fn dir)
-  (mapc (lambda (d) (walk-subdirs d fn)) (uiop:subdirectories dir)))
-
 (defun print-hash-table (table &optional (stream *standard-output*))
   (maphash (lambda (k v)
              (format stream "~s => ~s~%" k v))
@@ -40,32 +30,37 @@
               (setf (gethash key big) small-val)))))
   big)
   
+
+;; meta is a special variable that keeps track of the current metadata.
+;; very convenient for this, since subdirectories are able to inherit
+;; their parent directory's metadata.
+(defparameter *meta* (make-hash-table :test #'equal))
+
 ;; in a directory, reads a config.yaml file and all headers
-;; and adds these to the queue. queue is of the form (filetype path body meta)
-(defun add-flat-dir-to-queue (dir queue)
+;; and adds these to the queue. 
+(defun walk-and-add-dirs-to-queue (dir queue)
   (let* ((yaml-path (merge-pathnames *config-file* dir)) ;; extract yaml from dir/config.yaml
-         (*meta* (if (uiop:file-exists-p yaml-path)
-                     (cl-yy:yaml-simple-load (uiop:read-file-string yaml-path)))))
+         (new-meta (if (uiop:file-exists-p yaml-path)
+                     (cl-yy:yaml-simple-load (uiop:read-file-string yaml-path))
+                     (make-hash-table :test #'equal)))
+         (*meta* (merge-meta new-meta *meta*)))
 
     (dolist (file (uiop:directory-files dir))
-      ; (format t "file: ~a~%" file)
-      ; (format t "*processable*: ~a~%" *processable*)
-      ; (format t "pathname-type ~a~%" (pathname-type file))
-      ; (format t "member? ~a~%" (member (pathname-type file) *processable*))
       (when (and (member (pathname-type file) *processable* :test #'equal)
                  (not (equal (file-namestring file) *config-file*))) ;; already processed
         (multiple-value-bind (new-meta body) (utils:read-file-with-frontmatter file)
           (let* ((*meta* (merge-meta new-meta *meta*)) ;; merges with priority to the file's yaml
                  (filetype (pathname-type file))
-                 ;; IMPORTANT: targets are _always_ of this form
+                 ;; important: targets are _always_ of this form
                  (target `(:filetype ,filetype :filepath ,file :body ,body :meta ,*meta*)))
             (when (gethash "publish" *meta*)
-              (push target queue)))))))
+              (push target queue))))))
+    (dolist (subdir (uiop:subdirectories dir))
+      (setf queue (walk-and-add-dirs-to-queue subdir queue))))
+    
   queue)
 
 
 ;; does add-flat-dir-to-queue recursively through all subdirectories.
 (defun collect-dir (dir queue)
-  (walk-subdirs dir (lambda (dir) 
-                      (setf queue (add-flat-dir-to-queue dir queue))))
-  queue)
+  (walk-and-add-dirs-to-queue dir queue))

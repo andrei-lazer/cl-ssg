@@ -3,5 +3,6 @@
   (:export #:collect-dir
            #:merge-meta
            #:print-hash-table
-           #:process-input-dir))
+           #:process-input-dir
+           #:passthrough-copy))
 (in-package #:cl-ssg)

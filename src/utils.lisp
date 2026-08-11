@@ -44,5 +44,5 @@
   "reads a file and splits it into YAML frontmatter and body. doesn't matter
   what the filetype of the file is."
   (multiple-value-bind (yaml body) (split-frontmatter (uiop:read-file-string file))
-    (values (if yaml (cl-yy:yaml-simple-load yaml) (make-hash-table :test 'equal))
+    (values (if (and yaml (not (zerop (length yaml)))) (cl-yy:yaml-simple-load yaml) (make-hash-table :test 'equal))
             body)))

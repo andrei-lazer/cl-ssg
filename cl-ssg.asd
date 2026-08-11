@@ -18,23 +18,7 @@
                              (:file "utils")
                              (:file "markdown")
                              (:file "walk")
-                             (:file "compile"))))
+                             (:file "compile")
+                             (:file "extra"))))
 
   :in-order-to ((asdf:test-op (asdf:test-op "cl-ssg/tests"))))
-
-(asdf:defsystem
-  "cl-ssg/tests"
-  :depends-on ("cl-ssg" "fiveam" "cl-ppcre")
-  :serial t
-  :components
-  ((:module "tests"
-    :serial t
-    :components
-    ((:file "package")
-     (:file "utils")
-     (:file "markdown")
-     (:file "components")
-     (:file "layouts")
-     (:file "cards"))))
-  :perform (asdf:test-op (op system)
-             (uiop:symbol-call :app-tests :run-all-tests!)))
