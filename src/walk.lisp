@@ -1,6 +1,6 @@
 (in-package #:cl-ssg)
 
-(defparameter *processable* '("md"))
+(defparameter *processable* '("md" "lisp"))
 
 (defparameter *config-file* "config.yaml"
   "if found, this file will set a preset for the metadata of all files in that directory.
@@ -20,16 +20,16 @@
   type, in which case they're concatenated together."
   (when small
     (loop for key being the hash-keys of small using (hash-value small-val) do
-          (let ((big-val (gethash key big)))
-            (if big-val
+          (multiple-value-bind (big-val presentp) (gethash key big)
+            (if presentp
               (progn
+                (format t "key: ~a small-val: ~a big-val: ~a~%" key small-val big-val)
               ;; if collision only modify big if both values are lists
                 (when (and (listp big-val) (listp small-val))
                   (setf (gethash key big) (set-union small-val big-val))))
               ;; if no collision, add small's key-value pair to big
               (setf (gethash key big) small-val)))))
   big)
-  
 
 ;; meta is a special variable that keeps track of the current metadata.
 ;; very convenient for this, since subdirectories are able to inherit

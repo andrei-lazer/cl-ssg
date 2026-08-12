@@ -34,11 +34,26 @@
       *output-root*)
     (or markdown:*link-prefix* "/")))
 
+
+;; any lisp files should return a string at the end
+;; any other behaviour is not supported.
+(defun render-lisp-text (body)
+  (let ((out
+         (with-input-from-string (stream body)
+            (first (last (loop
+                           for form = (read stream nil :eof)
+                           until (eq form :eof)
+                           collect (eval form)))))))
+       out))
+    
+
 (defun body-to-html (body filetype)
   "converts various filetypes to html"
   (cond
     ((equal filetype "md") 
      (markdown:render-text body))
+    ((equal filetype "lisp") 
+     (render-lisp-text body))
     (t (format t "Filetype ~a is unsupported~%" filetype))))
 
 (defun call-by-name (fn-name pkg-name &rest args)
@@ -51,7 +66,7 @@
   applies that layout to the html"
   (if layout-str
     (apply #'call-by-name layout-str "layouts" args)
-    html))
+    (getf args :html)))
   
 (defun write-target (target)
   (let* ((html (getf target :html))
@@ -79,6 +94,8 @@
                (html (apply-layout layout-str :html html-core :meta meta))
                ;; create the new target
                (new-target (list :html html :out-path out-path)))
+          ; (format t "filepath: ~a, html: ~a~%" filepath html)
+          ; (format t "html-core:~a~%" html-core)
           new-target)))
 
 (defun process-input-dir ()
