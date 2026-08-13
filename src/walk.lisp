@@ -3,8 +3,8 @@
 (defparameter *processable* '("md" "lisp"))
 
 (defparameter *config-file* "config.yaml"
-  "if found, this file will set a preset for the metadata of all files in that directory.
-  currently cannot be inherited by subdirectories")
+  "if found, this file will set a preset for the metadata of all files in that directory
+  and subdirectories.")
 
 (defun print-hash-table (table &optional (stream *standard-output*))
   (maphash (lambda (k v)
@@ -23,7 +23,6 @@
           (multiple-value-bind (big-val presentp) (gethash key big)
             (if presentp
               (progn
-                (format t "key: ~a small-val: ~a big-val: ~a~%" key small-val big-val)
               ;; if collision only modify big if both values are lists
                 (when (and (listp big-val) (listp small-val))
                   (setf (gethash key big) (set-union small-val big-val))))

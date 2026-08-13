@@ -94,8 +94,6 @@
                (html (apply-layout layout-str :html html-core :meta meta))
                ;; create the new target
                (new-target (list :html html :out-path out-path)))
-          ; (format t "filepath: ~a, html: ~a~%" filepath html)
-          ; (format t "html-core:~a~%" html-core)
           new-target)))
 
 (defun process-input-dir ()
