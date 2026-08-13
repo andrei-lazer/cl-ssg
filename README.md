@@ -1,4 +1,4 @@
-# cl-ssg Documentation
+# cl-ssg
 
 A Static Site Generator in Common Lisp
 
