@@ -78,13 +78,13 @@ This is the website root. For this to be a functional website, it should have
 an `index.html` file, therefore there should me a `index.[md|lisp|html]` file
 in `*input-root*`.
 
-## Supported file types{#supported}
+## Supported file types
 
 All file types below can be compiled into HTML, and they all support YAML
 frontmatter
 
-- Markdown: this is the best supported, including $\LaTeX$ and tables. Code
-  highlighting is not supported.
+- Markdown: relatively well supported, including tables. Code
+  highlighting is not supported, and $\LaTeX$ is coming soon.
 - Common Lisp: this is the preferred alternative to JavaScript. Any .lisp files
   should evaluate to a string of HTML text. The best way to do this is using
   `(with-output-to-string (spinneret:*html*) ...)` and the [spinneret
