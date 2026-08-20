@@ -91,3 +91,8 @@ frontmatter
   library](https://github.com/ruricolist/spinneret).
 - HTML: This is the simplest implementation, since it is simply copied across
   after removing the frontmatter.
+
+## Further work
+
+I'm in the middle of a rewrite, so some features that used to be here are missing, 
+such as incremental builds and threading. These should be implemented soon.

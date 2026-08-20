@@ -1,4 +1,4 @@
-test-dir/
+.ai/
 AGENTS.*
 my-site/
 build.lisp

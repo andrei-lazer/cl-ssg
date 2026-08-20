@@ -22,3 +22,17 @@
                              (:file "extra"))))
 
   :in-order-to ((asdf:test-op (asdf:test-op "cl-ssg/tests"))))
+
+(asdf:defsystem
+  "cl-ssg/tests"
+  :depends-on ("cl-ssg"
+               "fiveam")
+  :serial t
+  :components ((:module "tests"
+                :serial t
+                :components ((:file "package")
+                             (:file "suite")
+                             (:file "frontmatter")
+                             (:file "output-path"))))
+
+  :perform (asdf:test-op (op c) (uiop:symbol-call "CL-SSG/TESTS" "RUN-TESTS")))
